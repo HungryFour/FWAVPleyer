@@ -1,8 +1,8 @@
 //
 //  ViewController.h
-//  FWAVPleyer
+//  FWAVPlayerDemo
 //
-//  Created by 武建明 on 16/9/7.
+//  Created by 武建明 on 16/8/18.
 //  Copyright © 2016年 Four_w. All rights reserved.
 //
 
