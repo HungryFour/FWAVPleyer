@@ -26,6 +26,8 @@ typedef NS_ENUM(NSUInteger, Direction) {
 @property (strong, nonatomic) UISlider* volumeViewSlider;//控制音量
 @property (assign, nonatomic) CGFloat currentSeconds;//滑动开始视频播放的进度
 
+@property (nonatomic,assign) BOOL isFullscreenMode;
+
 @end
 
 @implementation FWPlayerControl{
@@ -36,6 +38,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     self = [super initWithFrame:frame];
     if (self) {
         [self addSubview:self.playerView];
+        [self.playerView addSubview:self.volumeView];
         [self.playerView mas_makeConstraints:^(MASConstraintMaker *make) {
             make.edges.equalTo(self);
         }];
@@ -48,6 +51,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
         _playerView.backgroundColor = [UIColor clearColor];
     }
     return _playerView;
+}
+- (BOOL)isFullscreenMode{
+    return self.isFullscreenMode;
 }
 - (FWAVPlayerManager *)playerManager{
     if (!_playerManager) {
@@ -162,6 +168,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
                 //减少音量
                 [self.volumeViewSlider setValue:self.startVB - (panPoint.y / 30.0 / 10) animated:YES];
             }
+            NSLog(@"音量控件:%@",self.volumeViewSlider);
+            NSLog(@"音量:%f",self.volumeViewSlider.value);
+
         }
     } else if (self.direction == DirectionLeftOrRight ) {
 
@@ -207,7 +216,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
 }
 - (MPVolumeView *)volumeView {
     if (_volumeView == nil) {
-        _volumeView  = [[MPVolumeView alloc] init];
+        _volumeView  = [[MPVolumeView alloc] initWithFrame:CGRectMake(0, -10000, 20, 30)];
         [_volumeView sizeToFit];
         for (UIView *view in [_volumeView subviews]){
             if ([view.class.description isEqualToString:@"MPVolumeSlider"]){
@@ -223,9 +232,11 @@ typedef NS_ENUM(NSUInteger, Direction) {
     _videoUrl = videoUrl;
     /* 判断视频来源,网络视频还是本地视频 */
     if ([self isValidUrl:_videoUrl]) {
+        self.playerManager.isNetUrl = YES;
         [self.playerManager setUrl:[NSURL URLWithString:_videoUrl]];
     }else{
-        NSString *videoPath = [[NSBundle mainBundle] pathForResource:[NSString stringWithFormat:@"%@.mp4",_videoUrl] ofType:nil];
+        NSString *videoPath = [[NSBundle mainBundle] pathForResource:[NSString stringWithFormat:@"%@",_videoUrl] ofType:nil];
+        self.playerManager.isNetUrl = NO;
         [self.playerManager setUrl:[NSURL fileURLWithPath:videoPath]];
     }
 }

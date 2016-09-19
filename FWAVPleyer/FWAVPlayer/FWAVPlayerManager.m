@@ -28,7 +28,7 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
 @property (nonatomic, assign) BOOL hasBuffer;               //有缓冲
 @property (nonatomic, assign) BOOL isEnterBackgound;        //后台运行
 @property (nonatomic, assign) BOOL isSeekToZero;            //是否从头播放
-@property (nonatomic, assign) float recordPlayerRate;       //记录播放器状态,滑动之前记录,滑动之后复原
+//@property (nonatomic, assign) float recordPlayerRate;       //记录播放器状态,滑动之前记录,滑动之后复原
 @property (nonatomic, assign) BOOL isClear;                 //loadValuesAsynchronouslyForKeys准备播放是一个异步的操作,如果在该动作未执行完毕时,播放结束,进程依旧,所以此处添加记录
 @property (nonatomic, strong) id timeObserverForInterval;   //添加观察者,默认每隔一秒发送一次心跳
 @property (nonatomic, strong) UIView *currentSuperView;     //当前的父视图,此对象是用来做父视图延迟加载的,当设置了URL后加载真正的父视图
@@ -262,21 +262,21 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
     }
 }
 - (void)appEnteredForeground{
-    NSLog(@"---EnteredForeground");
-    //    self.isEnterBackgound = NO;
+    NSLog(@"开始前台运行");
     /**
      *  注意：appEnteredForeground 会在 AVPlayerItemStatusReadyToPlay（从后台回到前台会出发ReadyToPlay）
      *  之后被调用，顾设置 self.isEnterBackgound = NO 的操作放在了 AVPlayerItemStatusReadyToPlay 之中
      */
 }
 - (void)appEnteredBackground{
-    NSLog(@"---EnteredBackground");
+    NSLog(@"开始后台运行");
     self.isEnterBackgound = YES;
-    [self pause];
+    [self.player pause];
 }
 /* 当前是否正在播放视频 */
 - (BOOL)isPlaying{
-    return self.recordPlayerRate != 0.f || [self.player rate] != 0.f;
+//    return self.recordPlayerRate != 0.f || [self.player rate] != 0.f;
+    return [self.player rate] != 0.f;
 }
 /* 播放结束的时候回调这个方法. */
 - (void)playerItemDidReachEnd:(NSNotification *)notification
@@ -305,9 +305,6 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
                 /* 未知播放状态，尝试着去加载 */
             case AVPlayerItemStatusUnknown:
             {
-//                [self syncScrubber];
-//                NSLog(@"syncScrubber");
-
                 [self radioCurrentPlayStatus:FWAVPlayerPlayStateBuffering];
             }
                 break;
@@ -317,12 +314,12 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
                 /* 一旦 AVPlayerItem 准备好了去播放, i.e.
                  duration 值就可以去捕获到 （从后台回到前台也会触发 ReadyToPlay）*/
                 if (!self.isEnterBackgound) {
-                    //如果不是在播放,则初始化
-                    if (self.player.rate != 1) {
 
-//                        if (!self.timeObserverForInterval){
-//                            [self addTimeObserverForInterval];
-//                        }
+                    if (self.player.rate == 0 && self.isUserPause) {
+                        [self radioCurrentPlayStatus:FWAVPlayerPlayStatePause];
+                    }else{
+                        self.isUserPause = NO;
+                        [self.player play];
                     }
 
                 }else{
@@ -330,8 +327,14 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
                      *  如果是从后台回到前台，需要将 self.isEnterBackgound = NO
                      */
                     self.isEnterBackgound = NO;
+                    if (self.isUserPause) {
+                        [self radioCurrentPlayStatus:FWAVPlayerPlayStatePause];
+                    }else{
+                        [self.player play];
+                    }
+
                 }
-                [self radioCurrentPlayStatus:FWAVPlayerPlayStateBuffering];
+
 
             }
                 break;
@@ -502,29 +505,9 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
 - (void)fpsImageInCMTime:(CMTime)time
            fpsImageBlock:(void (^)(UIImage *))fpsImageBlock{
 
-//    AVAssetImageGenerator *generator = [[AVAssetImageGenerator alloc]initWithAsset:self.asset];
-//    generator.appliesPreferredTrackTransform = YES;
-//    generator.apertureMode = AVAssetImageGeneratorApertureModeEncodedPixels;
-//
-//
     NSValue *timeValue = [NSValue valueWithCMTime:time];
-//
-//    CGImageRef thumbnailImageRef = NULL;
-//    NSError *thumbnailImageGenerationError = nil;
-//
-//    thumbnailImageRef = [generator copyCGImageAtTime:time actualTime:NULL error:&thumbnailImageGenerationError];
-//
-//    if(!thumbnailImageRef){
-//        NSLog(@"thumbnailImageGenerationError %@",thumbnailImageGenerationError);
-//    }else{
-//        UIImage*thumbnailImage = thumbnailImageRef ? [[UIImage alloc]initWithCGImage: thumbnailImageRef] : nil;
-//        NSLog(@"帧图片获取成功");
-//        fpsImageBlock(thumbnailImage);
-//    }
-
-    dispatch_queue_t queue = dispatch_queue_create("com.fw.generatorqueue", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_queue_t queue = dispatch_queue_create("FWGeneratorQueue", DISPATCH_QUEUE_CONCURRENT);
     dispatch_async(queue, ^{
-
         NSLog(@"获取帧图片");
         [self.generator generateCGImagesAsynchronouslyForTimes:@[timeValue] completionHandler:^
          (CMTime requestedTime, CGImageRef image, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error)
@@ -538,37 +521,9 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
                  fpsImageBlock(nil);
              }
          }];
-//        NSError *error;
-//        CMTime actualTime;
-//        CGImageRef cgImage = [self.generator copyCGImageAtTime:time actualTime:&actualTime error:&error];
-//        CMTimeShow(actualTime);
-//        CGImageRelease(cgImage);
-//        dispatch_async(dispatch_get_main_queue(), ^{
-//
-//        NSLog(@"帧图片获取成功");
-//
-//        fpsImageBlock([UIImage imageWithCGImage:cgImage]);
-//
-//        });
 
 
     });
-
-
-//    NSLog(@"获取帧图片");
-//    [generator generateCGImagesAsynchronouslyForTimes:@[timeValue] completionHandler:^
-//     (CMTime requestedTime, CGImageRef image, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error)
-//     {
-//         NSLog(@"获取帧图片结果");
-//         if (result == AVAssetImageGeneratorSucceeded){
-//             NSLog(@"帧图片获取成功");
-//             fpsImageBlock([UIImage imageWithCGImage:image]);
-//         }else{
-//             NSLog(@"帧图片获取失败:%@",error);
-//             fpsImageBlock(nil);
-//         }
-//     }];
-
 }
 
 - (NSString *)currentDurationString{
@@ -702,30 +657,16 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
 //        /* 正常播放的情况下 */
 //        [self pause];
 //    }
+
     self.isSliding = YES;
     [self removeTimeObserverForInterval];
 
-
+    /* 通知开始拖动 */
     if (self.slideState) {
         self.slideState(FWAVPlayerPlaySlideStateBegin);
     }
 }
-
 // 拖动值发生改变
-- (void)sliderSeekToTime:(CGFloat)time{
-
-    NSLog(@"跳转到相应时刻");
-    [_player pause];
-    self.isUserPause = YES;
-
-    [_player seekToTime:CMTimeMakeWithSeconds(time, NSEC_PER_SEC) completionHandler:^(BOOL finished) {
-
-        /* 添加在此处,防止快进快退后,因视频未加载而造成的进度条跳动现象*/
-        self.isUserPause = NO;
-        [_player play];
-
-    }];
-}
 - (void)sliderSeekToProgress:(CGFloat)progress{
 
     if (progress > 1.00) {
@@ -741,9 +682,8 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
     if (self.slideState) {
         self.slideState(FWAVPlayerPlaySlideStateSliding);
     }
-
-    /* 滑动时,如果对外有获取帧图片的接口,则返回帧图片 */
-    if (self.fpsImage) {
+    /* 滑动时,如果对外有获取帧图片的接口,并且数据来自于本地,则返回帧图片 */
+    if (self.fpsImage && !self.isNetUrl) {
         [self fpsImageInCMTime:self.currentDuration fpsImageBlock:^(UIImage *image) {
             self.fpsImage(image);
         }];
@@ -761,7 +701,6 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
     if (self.slideState) {
         self.slideState(FWAVPlayerPlaySlideStateEnd);
     }
-
     if (CMTIME_IS_INVALID(itemDuration)) {
         return;
     }
@@ -771,12 +710,7 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
         double time = _sliderProgress*durationSeconds;
         [self sliderSeekToTime:time];
     }
-    /* 拖动结束了,得恢复拖动前的状态, (如果是非强制暂停的，以就是缓存不够导致的可以恢复播放 ) */
-    if (self.recordPlayerRate || !self.isUserPause){
-        /* 拖动前是播放状态，这时候需要恢复播放 */
-        [_player setRate:1.f];
-        self.recordPlayerRate = 0.f;
-    }
+
     /* 如果拖动到结束.则发送结束通知 */
     if (_sliderProgress == 1) {
         /* 视频播放结束，再次播放需要从0位置开始播放 */
@@ -784,6 +718,12 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
         [self radioCurrentPlayStatus:FWAVPlayerPlayStateFinished];
     }
 
+}
+// 跳转到相应时刻
+- (void)sliderSeekToTime:(CGFloat)time{
+    [_player seekToTime:CMTimeMakeWithSeconds(time, NSEC_PER_SEC) completionHandler:^(BOOL finished) {
+
+    }];
 }
 // 同步进度
 - (void)syncScrubber{

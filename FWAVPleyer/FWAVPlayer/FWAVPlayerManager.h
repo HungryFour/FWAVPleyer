@@ -176,4 +176,9 @@ typedef void (^FWSliderFPSImageBlock)(UIImage *fpsImage);
  */
 - (void)currentImage:(void (^)(UIImage *))currentImageBlock;
 
+/**
+ *  Video来源
+ */
+@property (assign, nonatomic)BOOL isNetUrl;
+
 @end

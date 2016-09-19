@@ -1,18 +1,19 @@
 //
-//  ViewController.m
-//  FWAVPlayerDemo
+//  FWMainViewController.m
+//  FWAVPleyer
 //
-//  Created by 武建明 on 16/8/18.
+//  Created by 武建明 on 16/9/13.
 //  Copyright © 2016年 Four_w. All rights reserved.
 //
 
-#import "ViewController.h"
+#import "FWMainViewController.h"
 #import "FWPlayerView.h"
 #import "VideoTableViewCell.h"
 #import "PlayerViewController.h"
 #import "FWVideoModel.h"
 #import <MJExtension.h>
 #import <UIImageView+WebCache.h>
+#import <Masonry.h>
 
 #define kSMainWidth [UIScreen mainScreen].bounds.size.width
 #define kSMainHeight [UIScreen mainScreen].bounds.size.height
@@ -21,7 +22,7 @@
 #define WeakObj(o) autoreleasepool{} __weak typeof(o) o##Weak = o;
 #define StrongObj(o) autoreleasepool{} __strong typeof(o) o = o##Weak;
 
-@interface ViewController ()<UITableViewDelegate,UITableViewDataSource,VideoTableViewCellDelegate,FWPlayerViewStateDelegate>
+@interface FWMainViewController ()<UITableViewDelegate,UITableViewDataSource,VideoTableViewCellDelegate,FWPlayerViewStateDelegate>
 
 @property (strong, nonatomic)UITableView *tableView;
 
@@ -30,9 +31,10 @@
 @property (strong,nonatomic)FWPlayerView *playerView;
 @property (strong,nonatomic)NSMutableArray *dataArray;
 
+
 @end
 
-@implementation ViewController
+@implementation FWMainViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -40,21 +42,25 @@
 
     NSString *plistPath = [[NSBundle mainBundle] pathForResource:@"FWVideoList" ofType:@"plist"];
     self.dataArray = [FWVideoModel mj_objectArrayWithKeyValuesArray:[[NSArray alloc] initWithContentsOfFile:plistPath]];
-
     [self.view addSubview:self.tableView];
 
+    [self.tableView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self.view);
+    }];
 }
-- (void)viewWillDisappear:(BOOL)animated{
-    [super viewWillDisappear:animated];
-    [self.playerView.playerManager clear];
-    [self.playerView removeFromSuperview];
-    self.playerView = nil;
+- (void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    self.navigationController.navigationBarHidden = NO;
+}
+- (void)viewDidDisappear:(BOOL)animated{
+    [super viewDidDisappear:animated];
+    [self removePlayerView];
 }
 #pragma mark - Property
 - (UITableView *)tableView{
 
     if (!_tableView) {
-        _tableView = [[UITableView alloc]initWithFrame:self.view.bounds style:UITableViewStylePlain];
+        _tableView = [[UITableView alloc]init];
         _tableView.delegate = self;
         _tableView.dataSource = self;
         _tableView.rowHeight = kVideoViewHeight;
@@ -67,7 +73,9 @@
         _playerView = [[FWPlayerView alloc]init];
         _playerView.backgroundColor = [UIColor lightGrayColor];
         _playerView.stateDelegate = self;
+//        _playerView.isFullscreenModeDelegate = self;
         _playerView.isClearFinished = NO;
+        _playerView.hasDeviceOrientationObserver = NO;
     }
     return _playerView;
 }
@@ -94,13 +102,10 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     PlayerViewController *pvc = [[PlayerViewController alloc]init];
     pvc.videoModel = [self.dataArray objectAtIndex:indexPath.row];
-    [self presentViewController:pvc animated:YES completion:^{
-
-    }];
+    [self.navigationController pushViewController:pvc animated:YES];
 }
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
     [self setPlayerViewSuperView];
-
 }
 #pragma mark - VideoTableViewCellDelegate
 - (void)cellDidClickPlay:(VideoTableViewCell *)cell{
@@ -120,7 +125,7 @@
 - (void)setPlayerViewSuperView{
 
     /* 如果播放器不在播放和加载中,则删除 */
-    if (self.playerView.state == FWAVPlayerPlayStateFailed){
+    if (self.playerView.state == FWAVPlayerPlayStateFailed || self.playerView.state == FWAVPlayerPlayStateFinished || [self.playerView.videoUrl length]==0){
         [self removePlayerView];
         return;
     }
@@ -128,18 +133,17 @@
     if (self.playerView.isFullscreenMode) {
         return;
     }
-
     VideoTableViewCell *cell = [self.tableView cellForRowAtIndexPath:self.playingIndexPath];
     NSArray *visableCells = self.tableView.visibleCells;
 
     if ([visableCells containsObject:cell]) {
-        NSLog(@"应该在cell上");
+//        NSLog(@"应该在cell上");
         if (![cell.contentView.subviews containsObject:self.playerView]) {
 
             NSLog(@"添加到cell.contentView");
             [cell.contentView addSubview:self.playerView];
 
-            [self.playerView mas_makeConstraints:^(MASConstraintMaker *make) {
+            [self.playerView mas_remakeConstraints:^(MASConstraintMaker *make) {
                 make.edges.equalTo(cell.contentView);
             }];
             /* 告诉self.playerView约束需要更新 */
@@ -149,14 +153,14 @@
         }
 
     }else {
-        NSLog(@"在底部");
+//        NSLog(@"在底部");
         /* 如果已经添加到view中,则不必添加 */
         if (![self.view.subviews containsObject:self.playerView]&&self.playerView.superview) {
 
-            NSLog(@"添加到self.view");
+//            NSLog(@"添加到self.view");
 
             [self.view addSubview:self.playerView];
-            [self.playerView mas_makeConstraints:^(MASConstraintMaker *make) {
+            [self.playerView mas_remakeConstraints:^(MASConstraintMaker *make) {
                 make.width.mas_equalTo(200);
                 make.height.mas_equalTo(120);
                 make.bottom.equalTo(self.view.mas_bottom).offset(-5);
@@ -170,7 +174,9 @@
 }
 - (void)removePlayerView{
     if (self.playerView.superview) {
+        [self.playerView.playerManager clear];
         [self.playerView removeFromSuperview];
+        self.playerView = nil;
     }
 }
 #pragma mark - FWPlayerViewStateDelegate
@@ -188,7 +194,7 @@
             break;
         case FWAVPlayerPlayStateFinished:
             NSLog(@"FWAVPlayerPlayStateFinished");
-//            [self removePlayerView];
+            //            [self removePlayerView];
             break;
         case FWAVPlayerPlayStateBuffering:
             NSLog(@"FWAVPlayerPlayStateBuffering");
@@ -197,21 +203,26 @@
         case FWAVPlayerPlayStateFailed:
             NSLog(@"FWAVPlayerPlayStateFailed");
             [self removePlayerView];
-
+            
             break;
-
+            
         default:
             break;
     }
 }
-
-- (BOOL)shouldAutorotate{
-    return NO;
-}
-
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
 
 @end

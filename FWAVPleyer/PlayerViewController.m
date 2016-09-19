@@ -9,7 +9,6 @@
 #import "PlayerViewController.h"
 
 #import "FWAVPlayerManager.h"
-#import "FWPlayerView.h"
 #import <UIImageView+WebCache.h>
 
 #define kSMainWidth [UIScreen mainScreen].bounds.size.width
@@ -20,8 +19,6 @@
 #define StrongObj(o) autoreleasepool{} __strong typeof(o) o = o##Weak;
 
 @interface PlayerViewController ()<FWPlayerViewStateDelegate>
-
-@property (strong,nonatomic)FWPlayerView *playerView;
 
 @property (strong,nonatomic)UIButton *returnButton;//返回
 
@@ -35,6 +32,7 @@
     self.view.backgroundColor = [UIColor whiteColor];
     [self.view addSubview:self.playerView];
     [self.view addSubview:self.returnButton];
+    self.navigationController.interactivePopGestureRecognizer.enabled = YES;
 
     [self.playerView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.equalTo(@0);
@@ -50,17 +48,22 @@
 
     [self.playerView.placeholderImageView sd_setImageWithURL:[NSURL URLWithString:self.videoModel.img]];
     self.playerView.videoUrl = self.videoModel.video;
+
+}
+- (void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    self.navigationController.navigationBarHidden = YES;
 }
 - (void)viewWillDisappear:(BOOL)animated{
-    [super viewWillDisappear:animated];
     [self.playerView.playerManager clear];
+    [super viewWillDisappear:animated];
+}
+- (void)viewDidDisappear:(BOOL)animated{
+    [super viewDidDisappear:animated];
+    self.navigationController.navigationBarHidden = NO;
 }
 - (void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    self.playerView.rotationLock = NO;
-}
-- (BOOL)shouldAutorotate{
-    return NO;
 }
 - (UIButton *)returnButton
 {
@@ -85,9 +88,7 @@
 }
 #pragma Mark- Action
 - (void)returnButtonClick{
-    [self dismissViewControllerAnimated:YES completion:^{
-
-    }];
+    [self.navigationController popViewControllerAnimated:YES];
 }
 #pragma mark - FWPlayerViewStateDelegate
 - (void)playerView:(FWPlayerView *)playerView state:(FWAVPlayerPlayState)state{

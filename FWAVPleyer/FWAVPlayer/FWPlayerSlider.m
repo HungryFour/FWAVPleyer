@@ -40,8 +40,13 @@ static const CGFloat kPlayerSliderHeight = 30.0;//高度
     if (self) {
         self.clipsToBounds = NO;
         self.isDirectionLeftOrRight = NO;
+
         [self addViews];
         [self setConstraints];
+
+        self.topProgress = 0;
+        self.midProgress = 0;
+
     }
     return self;
 
@@ -49,10 +54,15 @@ static const CGFloat kPlayerSliderHeight = 30.0;//高度
 - (instancetype)init{
     self = [super init];
     if (self) {
+        self.clipsToBounds = NO;
         self.isDirectionLeftOrRight = NO;
+
+
         [self addViews];
         [self setConstraints];
-        self.clipsToBounds = NO;
+
+        self.topProgress = 0;
+        self.midProgress = 0;
     }
     return self;
 }
@@ -139,12 +149,15 @@ static const CGFloat kPlayerSliderHeight = 30.0;//高度
         make.height.mas_equalTo(2);
         make.width.mas_equalTo(0);
     }];
+    self.topShapeView.mas_key = @"topShapeView";
+
     [self.sliderImageView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.equalTo(self.mas_centerY);
         make.centerX.mas_equalTo(self.topShapeView.mas_right);
         make.height.equalTo(self.mas_height);
         make.width.equalTo(self.mas_height);
     }];
+    self.sliderImageView.mas_key = @"sliderImageView";
 
     [self.fpsImageView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.bottom.equalTo(self.mas_top);
@@ -152,6 +165,7 @@ static const CGFloat kPlayerSliderHeight = 30.0;//高度
         make.height.equalTo(@90);
         make.width.equalTo(@180);
     }];
+    self.fpsImageView.mas_key = @"fpsImageView";
 
     [self.midShapeView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.equalTo(self.mas_centerY);
@@ -159,21 +173,22 @@ static const CGFloat kPlayerSliderHeight = 30.0;//高度
         make.height.mas_equalTo(2);
         make.width.mas_equalTo(0);
     }];
+    self.midShapeView.mas_key = @"midShapeView";
+
     [self.bottomShapeView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.equalTo(self.mas_centerY);
         make.left.mas_equalTo(0);
         make.right.mas_equalTo(0);
         make.height.mas_equalTo(2);
     }];
+    self.bottomShapeView.mas_key = @"bottomShapeView";
+
 }
 #pragma mark - set
 - (void)setTopProgress:(CGFloat)topProgress{
-    _topProgress = topProgress;
-    [self.topShapeView mas_remakeConstraints:^(MASConstraintMaker *make) {
-        make.width.mas_equalTo(self.bounds.size.width*topProgress);
-        make.centerY.equalTo(self.mas_centerY);
-        make.left.mas_equalTo(0);
-        make.height.mas_equalTo(2);
+    _topProgress = topProgress >=0 ? topProgress : 0;
+    [self.topShapeView mas_updateConstraints:^(MASConstraintMaker *make) {
+        make.width.mas_equalTo(self.bounds.size.width*_topProgress);
     }];
     // 约束需要更新
     [self setNeedsUpdateConstraints];
@@ -182,12 +197,9 @@ static const CGFloat kPlayerSliderHeight = 30.0;//高度
 
 }
 - (void)setMidProgress:(CGFloat)midProgress{
-    _midProgress = midProgress;
-    [self.midShapeView mas_remakeConstraints:^(MASConstraintMaker *make) {
-        make.width.mas_equalTo(self.bounds.size.width*midProgress);
-        make.centerY.equalTo(self.mas_centerY);
-        make.left.mas_equalTo(0);
-        make.height.mas_equalTo(2);
+    _midProgress = midProgress >=0 ? midProgress : 0;
+    [self.midShapeView mas_updateConstraints:^(MASConstraintMaker *make) {
+        make.width.mas_equalTo(self.bounds.size.width*_midProgress);
     }];
     // 约束需要更新
     [self setNeedsUpdateConstraints];

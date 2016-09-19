@@ -8,10 +8,14 @@
 
 #import <UIKit/UIKit.h>
 
+#import "FWPlayerView.h"
 #import "FWVideoModel.h"
 
 @interface PlayerViewController : UIViewController
 
 @property (strong, nonatomic)FWVideoModel *videoModel;
+
+@property (strong,nonatomic)FWPlayerView *playerView;
+
 
 @end

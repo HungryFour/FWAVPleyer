@@ -3,17 +3,14 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 47;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		200FE7971D82A391009811E6 /* theelderscrolls.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 207C230E1D82A00400C19841 /* theelderscrolls.mp4 */; };
 		203D461D1D80046800D6C7B3 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 203D461C1D80046800D6C7B3 /* main.m */; };
 		203D46201D80046800D6C7B3 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 203D461F1D80046800D6C7B3 /* AppDelegate.m */; };
-		203D46231D80046800D6C7B3 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 203D46221D80046800D6C7B3 /* ViewController.m */; };
-		203D46261D80046800D6C7B3 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 203D46241D80046800D6C7B3 /* Main.storyboard */; };
 		203D46281D80046800D6C7B3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 203D46271D80046800D6C7B3 /* Assets.xcassets */; };
-		203D462B1D80046800D6C7B3 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 203D46291D80046800D6C7B3 /* LaunchScreen.storyboard */; };
 		203D46361D80046800D6C7B3 /* FWAVPleyerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 203D46351D80046800D6C7B3 /* FWAVPleyerTests.m */; };
 		203D46411D80046800D6C7B3 /* FWAVPleyerUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 203D46401D80046800D6C7B3 /* FWAVPleyerUITests.m */; };
 		203D466F1D800D2F00D6C7B3 /* FWAVPlayerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 203D46681D800D2F00D6C7B3 /* FWAVPlayerManager.m */; };
@@ -22,9 +19,12 @@
 		203D46721D800D2F00D6C7B3 /* FWPlayerView.m in Sources */ = {isa = PBXBuildFile; fileRef = 203D466E1D800D2F00D6C7B3 /* FWPlayerView.m */; };
 		203D46771D800D5C00D6C7B3 /* PlayerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 203D46741D800D5C00D6C7B3 /* PlayerViewController.m */; };
 		203D46781D800D5C00D6C7B3 /* VideoTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 203D46761D800D5C00D6C7B3 /* VideoTableViewCell.m */; };
+		206525261D87D9A1001CD23D /* FWMainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 206525251D87D9A1001CD23D /* FWMainViewController.m */; };
+		20677AF51D8E46710048C16C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 20677AF41D8E46710048C16C /* Main.storyboard */; };
 		207C23041D81162900C19841 /* FWAVPlayerResources.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 207C23021D81031700C19841 /* FWAVPlayerResources.bundle */; };
 		207C230A1D812FA300C19841 /* FWVideoList.plist in Resources */ = {isa = PBXBuildFile; fileRef = 207C23091D812FA300C19841 /* FWVideoList.plist */; };
 		207C230D1D81579700C19841 /* FWVideoModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 207C230C1D81579700C19841 /* FWVideoModel.m */; };
+		20FE72301D8E948C005369E8 /* FWNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 20FE722F1D8E948C005369E8 /* FWNavigationController.m */; };
 		7A3A4E9F176F3339F5E0EA65 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B272FAA343FDBCC2B5515315 /* libPods.a */; };
 /* End PBXBuildFile section */
 
@@ -50,11 +50,7 @@
 		203D461C1D80046800D6C7B3 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		203D461E1D80046800D6C7B3 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		203D461F1D80046800D6C7B3 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		203D46211D80046800D6C7B3 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		203D46221D80046800D6C7B3 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
-		203D46251D80046800D6C7B3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		203D46271D80046800D6C7B3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		203D462A1D80046800D6C7B3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		203D462C1D80046800D6C7B3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		203D46311D80046800D6C7B3 /* FWAVPleyerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FWAVPleyerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		203D46351D80046800D6C7B3 /* FWAVPleyerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FWAVPleyerTests.m; sourceTree = "<group>"; };
@@ -74,12 +70,17 @@
 		203D46741D800D5C00D6C7B3 /* PlayerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlayerViewController.m; sourceTree = "<group>"; };
 		203D46751D800D5C00D6C7B3 /* VideoTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoTableViewCell.h; sourceTree = "<group>"; };
 		203D46761D800D5C00D6C7B3 /* VideoTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoTableViewCell.m; sourceTree = "<group>"; };
+		206525241D87D9A1001CD23D /* FWMainViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FWMainViewController.h; sourceTree = "<group>"; };
+		206525251D87D9A1001CD23D /* FWMainViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FWMainViewController.m; sourceTree = "<group>"; };
+		20677AF41D8E46710048C16C /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		207C23011D801BAE00C19841 /* FWAVPlayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FWAVPlayer.h; sourceTree = "<group>"; };
 		207C23021D81031700C19841 /* FWAVPlayerResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = FWAVPlayerResources.bundle; sourceTree = "<group>"; };
 		207C23091D812FA300C19841 /* FWVideoList.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = FWVideoList.plist; sourceTree = "<group>"; };
 		207C230B1D81579700C19841 /* FWVideoModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FWVideoModel.h; sourceTree = "<group>"; };
 		207C230C1D81579700C19841 /* FWVideoModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FWVideoModel.m; sourceTree = "<group>"; };
 		207C230E1D82A00400C19841 /* theelderscrolls.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = theelderscrolls.mp4; sourceTree = "<group>"; };
+		20FE722E1D8E948C005369E8 /* FWNavigationController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FWNavigationController.h; sourceTree = "<group>"; };
+		20FE722F1D8E948C005369E8 /* FWNavigationController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FWNavigationController.m; sourceTree = "<group>"; };
 		6028A1402B4D3839571BD5CB /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 		8D86A147BA0688E29816085B /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
 		B272FAA343FDBCC2B5515315 /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -139,8 +140,10 @@
 				203D46661D800D2F00D6C7B3 /* FWAVPlayer */,
 				203D461E1D80046800D6C7B3 /* AppDelegate.h */,
 				203D461F1D80046800D6C7B3 /* AppDelegate.m */,
-				203D46211D80046800D6C7B3 /* ViewController.h */,
-				203D46221D80046800D6C7B3 /* ViewController.m */,
+				20FE722E1D8E948C005369E8 /* FWNavigationController.h */,
+				20FE722F1D8E948C005369E8 /* FWNavigationController.m */,
+				206525241D87D9A1001CD23D /* FWMainViewController.h */,
+				206525251D87D9A1001CD23D /* FWMainViewController.m */,
 				203D46751D800D5C00D6C7B3 /* VideoTableViewCell.h */,
 				203D46761D800D5C00D6C7B3 /* VideoTableViewCell.m */,
 				203D46731D800D5C00D6C7B3 /* PlayerViewController.h */,
@@ -149,9 +152,8 @@
 				207C230C1D81579700C19841 /* FWVideoModel.m */,
 				207C23091D812FA300C19841 /* FWVideoList.plist */,
 				207C230E1D82A00400C19841 /* theelderscrolls.mp4 */,
-				203D46241D80046800D6C7B3 /* Main.storyboard */,
 				203D46271D80046800D6C7B3 /* Assets.xcassets */,
-				203D46291D80046800D6C7B3 /* LaunchScreen.storyboard */,
+				20677AF41D8E46710048C16C /* Main.storyboard */,
 				203D462C1D80046800D6C7B3 /* Info.plist */,
 				203D461B1D80046800D6C7B3 /* Supporting Files */,
 			);
@@ -284,11 +286,13 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = FW;
-				LastUpgradeCheck = 0730;
+				LastUpgradeCheck = 0800;
 				ORGANIZATIONNAME = Four_w;
 				TargetAttributes = {
 					203D46171D80046800D6C7B3 = {
 						CreatedOnToolsVersion = 7.3;
+						DevelopmentTeam = 35M9DQK5KG;
+						ProvisioningStyle = Automatic;
 					};
 					203D46301D80046800D6C7B3 = {
 						CreatedOnToolsVersion = 7.3;
@@ -301,7 +305,7 @@
 				};
 			};
 			buildConfigurationList = 203D46131D80046800D6C7B3 /* Build configuration list for PBXProject "FWAVPleyer" */;
-			compatibilityVersion = "Xcode 3.2";
+			compatibilityVersion = "Xcode 6.3";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -326,10 +330,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				200FE7971D82A391009811E6 /* theelderscrolls.mp4 in Resources */,
+				20677AF51D8E46710048C16C /* Main.storyboard in Resources */,
 				207C23041D81162900C19841 /* FWAVPlayerResources.bundle in Resources */,
-				203D462B1D80046800D6C7B3 /* LaunchScreen.storyboard in Resources */,
 				203D46281D80046800D6C7B3 /* Assets.xcassets in Resources */,
-				203D46261D80046800D6C7B3 /* Main.storyboard in Resources */,
 				207C230A1D812FA300C19841 /* FWVideoList.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -403,12 +406,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				206525261D87D9A1001CD23D /* FWMainViewController.m in Sources */,
 				203D46781D800D5C00D6C7B3 /* VideoTableViewCell.m in Sources */,
-				203D46231D80046800D6C7B3 /* ViewController.m in Sources */,
 				203D46201D80046800D6C7B3 /* AppDelegate.m in Sources */,
 				203D46701D800D2F00D6C7B3 /* FWPlayerControl.m in Sources */,
 				203D466F1D800D2F00D6C7B3 /* FWAVPlayerManager.m in Sources */,
 				203D46711D800D2F00D6C7B3 /* FWPlayerSlider.m in Sources */,
+				20FE72301D8E948C005369E8 /* FWNavigationController.m in Sources */,
 				203D46771D800D5C00D6C7B3 /* PlayerViewController.m in Sources */,
 				203D461D1D80046800D6C7B3 /* main.m in Sources */,
 				207C230D1D81579700C19841 /* FWVideoModel.m in Sources */,
@@ -447,25 +451,6 @@
 		};
 /* End PBXTargetDependency section */
 
-/* Begin PBXVariantGroup section */
-		203D46241D80046800D6C7B3 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				203D46251D80046800D6C7B3 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		203D46291D80046800D6C7B3 /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				203D462A1D80046800D6C7B3 /* Base */,
-			);
-			name = LaunchScreen.storyboard;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
-
 /* Begin XCBuildConfiguration section */
 		203D46431D80046800D6C7B3 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -481,8 +466,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -504,7 +491,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -526,8 +513,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -543,7 +532,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -557,8 +546,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = 35M9DQK5KG;
 				INFOPLIST_FILE = FWAVPleyer/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.fw.avplayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -573,8 +564,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = 35M9DQK5KG;
 				INFOPLIST_FILE = FWAVPleyer/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.fw.avplayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";

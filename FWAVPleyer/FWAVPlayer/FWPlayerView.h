@@ -18,15 +18,33 @@ typedef NS_ENUM(NSInteger,kDeviceOrientation) {
 };
 @class FWPlayerView;
 
+//@protocol FWPlayerViewIsFullscreenModeDelegate <NSObject>
+//
+///**
+// 屏幕全屏半屏状态切换通知
+//
+// @param playerView       playerView
+// @param isFullscreenMode 是否是全屏状态
+// */
+//- (void)playerView:(FWPlayerView *)playerView isFullscreenMode:(BOOL)isFullscreenMode;
+//@end
+
 @protocol FWPlayerViewStateDelegate <NSObject>
 
-- (void)playerView:(FWPlayerView *)playerView state:(FWAVPlayerPlayState)state;
+/**
+ 播放状态代理通知
 
+ @param playerView player
+ @param state      播放状态
+ */
+- (void)playerView:(FWPlayerView *)playerView state:(FWAVPlayerPlayState)state;
 @end
 
 @interface FWPlayerView : FWPlayerControl
 
 @property (weak,nonatomic) id<FWPlayerViewStateDelegate>stateDelegate;
+
+//@property (weak,nonatomic) id<FWPlayerViewIsFullscreenModeDelegate>isFullscreenModeDelegate;
 
 /**
  *  更新PlayerView的约束
@@ -52,12 +70,21 @@ typedef NS_ENUM(NSInteger,kDeviceOrientation) {
 /**
  *  是否全屏
  */
-@property (nonatomic, assign) BOOL isFullscreenMode;
+@property (nonatomic, assign, readonly) BOOL isFullscreenMode;
 
 /**
- *  是否开启旋转锁  默认YES/关闭锁 开启后视频会根据手机旋转而旋转
+    检测屏幕方向的观察者是否存在,默认存在, 置为YES时,横屏竖屏,视频窗口跟随变化
  */
-@property (nonatomic, assign) BOOL rotationLock;
+@property (nonatomic, assign)BOOL hasDeviceOrientationObserver;
 
+/**
+    是否允许自动旋转屏幕,锁屏时用
+ */
+@property (assign, nonatomic, readonly)BOOL shouldAutorotate;
+
+/**
+    屏幕旋转,当前方向
+ */
+@property (assign, nonatomic, readonly)UIInterfaceOrientationMask interfaceOrientationMask;
 
 @end

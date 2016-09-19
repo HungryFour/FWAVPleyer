@@ -33,19 +33,26 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
 
 @property (strong,nonatomic)UIButton *fullScreenButton;//全屏按钮
 
+@property (strong,nonatomic)UIButton *lockScreenButton;//锁屏按钮
+
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;//小菊花
 
 @property (nonatomic, assign) BOOL isShowUI;//是否显示UI
+
+@property (nonatomic, assign) BOOL isLockScreen;
 
 @property (nonatomic, assign)UIView *originalSuperView;//原始SuperView,全屏时所用
 
 @property (nonatomic, assign)CGRect originalFrame;//原始Frame,全屏时所用
 
 @property (nonatomic, assign)NSInteger originalIndex;//原始index,在父视图中属于第几层,全屏时所用
+@property (nonatomic, assign) BOOL isFullscreenMode;//是否全屏
 
 @property (nonatomic, assign)kDeviceOrientation deviceOrientation;//屏幕旋转方向
 
-@property (nonatomic, assign)BOOL hasDeviceOrientationObserver;//检测屏幕方向的观察者是否存在
+@property (assign, nonatomic)BOOL shouldAutorotate;//是否自动旋转
+
+@property (assign, nonatomic)UIInterfaceOrientationMask interfaceOrientationMask;//旋转角度
 
 @end
 
@@ -55,6 +62,7 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
 
     self = [super initWithFrame:frame];
     if (self) {
+        [self addViews];
         [self setup];
     }
     return self;
@@ -63,15 +71,15 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
 
     self = [super init];
     if (self) {
+        [self addViews];
         [self setup];
     }
     return self;
 
 }
 - (void)dealloc{
-    [self removeObserver];
+    [self removeDeviceOrientationChangedObserver];
 }
-
 - (void)setup{
 
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onTap:)];
@@ -84,28 +92,37 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     self.isClearFinished = NO;
     self.state = FWAVPlayerPlayStateBuffering;
     self.isDisableDrag = YES;
-    self.hasDeviceOrientationObserver = NO;
-    self.rotationLock = YES;
     self.deviceOrientation = kDeviceOrientationPortrait;
+    self.isLockScreen = NO;
+    self.shouldAutorotate = YES;
+    self.interfaceOrientationMask = UIInterfaceOrientationMaskAll;
 
-    [self addViews];
     [self setConstraints];
-
-//    [self addObserver];
     [self acceptPlayerManagerBlock];
+    [self autoFadeOutUI];
 
+    self.hasDeviceOrientationObserver = YES;
 }
-- (void)addObserver{
-
-
+- (void)setHasDeviceOrientationObserver:(BOOL)hasDeviceOrientationObserver{
+    _hasDeviceOrientationObserver = hasDeviceOrientationObserver;
+    if (_hasDeviceOrientationObserver) {
+        [self addDeviceOrientationChangedObserver];
+    }else{
+        [self removeDeviceOrientationChangedObserver];
+    }
 }
-- (void)removeObserver{
-
+// 添加屏幕旋转KVO
+- (void)addDeviceOrientationChangedObserver{
+    UIDevice *device = [UIDevice currentDevice];
+    [device beginGeneratingDeviceOrientationNotifications];
+    NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
+    [nc addObserver:self selector:@selector(orientationChanged:) name:UIDeviceOrientationDidChangeNotification  object:device];
+}
+// 删除屏幕旋转的KVO
+- (void)removeDeviceOrientationChangedObserver{
     NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
     UIDevice *device = [UIDevice currentDevice];
     [nc removeObserver:self name:UIDeviceOrientationDidChangeNotification object:device];
-    self.hasDeviceOrientationObserver = NO;
-
 }
 /* 获取来自playerManager的Block */
 - (void)acceptPlayerManagerBlock{
@@ -118,9 +135,6 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         self.currentTimeLabel.text = self.playerManager.currentDurationString;
         self.totalTimeLabel.text = self.playerManager.itemDurationString;
         self.progressSlider.topProgress = progress;
-        if (progress < 0.2) {
-            NSLog(@"窝草");
-        }
     };
 
     /* 缓冲进度 */
@@ -152,16 +166,13 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
             default:
                 break;
         }
-
     };
-
 
     /* 帧图片 */
     self.playerManager.fpsImage = ^(UIImage *image){
         @StrongObj(self);
         dispatch_async(dispatch_get_main_queue(), ^{
             self.progressSlider.fpsImageView.image = image;
-
         });
     };
 
@@ -192,8 +203,7 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
             }
             /* 播放结束后结束全屏状态 */
             if (self.isFullscreenMode) {
-                [[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationPortrait  animated:NO];
-                [self shrinkScreen];
+                [self fullScreenClick];
             }
 
         }else{
@@ -214,9 +224,9 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
             self.playButton.selected = NO;
             [self animateShow];
         }
-        /* 准备暂停 */
+        /* 暂停 */
         if (status == FWAVPlayerPlayStatePause) {
-            [self resetUI];
+
         }
     };
 }
@@ -227,6 +237,7 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     [self sendSubviewToBack:self.placeholderImageView];
 
     [self.playUI addSubview:self.playButton];
+    [self.playUI addSubview:self.lockScreenButton];
     [self.playUI addSubview:self.repeatButton];
     [self.playUI addSubview:self.bottomBar];
     [self.playUI addSubview:self.indicatorView];
@@ -235,30 +246,42 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     [self.bottomBar addSubview:self.progressSlider];
     [self.bottomBar addSubview:self.totalTimeLabel];
     [self.bottomBar addSubview:self.fullScreenButton];
-
 }
 - (void)setConstraints{
 
     [self.playUI mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.equalTo(self);
     }];
+    self.playUI.mas_key = @"playUI";
+
     [self.placeholderImageView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.equalTo(self);
     }];
+    self.placeholderImageView.mas_key = @"placeholderImageView";
 
     [self.indicatorView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.center.equalTo(self.playUI);
     }];
-
+    self.indicatorView.mas_key = @"indicatorView";
 
     [self.playButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.center.equalTo(self.playUI);
         make.size.mas_equalTo(CGSizeMake(44, 44));
     }];
+    self.playButton.mas_key = @"playButton";
+
+    [self.lockScreenButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(5);
+        make.centerY.equalTo(self.playUI.mas_centerY);
+        make.size.mas_equalTo(CGSizeMake(44, 44));
+    }];
+    self.lockScreenButton.mas_key = @"lockScreenButton";
+
     [self.repeatButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.center.equalTo(self.playUI);
         make.size.mas_equalTo(CGSizeMake(40, 60));
     }];
+    self.repeatButton.mas_key = @"repeatButton";
 
     [self.bottomBar mas_makeConstraints:^(MASConstraintMaker *make) {
         make.bottom.equalTo(self.playUI.mas_bottom).offset(0);
@@ -266,6 +289,7 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         make.right.equalTo(self.playUI.mas_right).offset(0);
         make.height.mas_equalTo(kBottomBarShrinkScreenHeight);
     }];
+    self.bottomBar.mas_key = @"bottomBar";
 
     [self.currentTimeLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.bottom.equalTo(self.bottomBar.mas_bottom).offset(0);
@@ -273,6 +297,7 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         make.width.greaterThanOrEqualTo(@45);
         make.height.equalTo(self.bottomBar.mas_height);
     }];
+    self.currentTimeLabel.mas_key = @"currentTimeLabel";
 
     [self.totalTimeLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.bottom.equalTo(self.bottomBar.mas_bottom).offset(0);
@@ -280,6 +305,7 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         make.width.greaterThanOrEqualTo(@45);
         make.height.equalTo(self.bottomBar.mas_height);
     }];
+    self.totalTimeLabel.mas_key = @"totalTimeLabel";
 
     [self.fullScreenButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.equalTo(self.bottomBar.mas_right).offset(0);
@@ -287,6 +313,8 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         make.centerY.equalTo(self.totalTimeLabel.mas_centerY);
         make.height.equalTo(self.bottomBar.mas_height);
     }];
+    self.fullScreenButton.mas_key = @"fullScreenButton";
+
 
     [self.progressSlider mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.equalTo(self.bottomBar.mas_centerY);
@@ -294,6 +322,9 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         make.right.equalTo(self.totalTimeLabel.mas_left).offset(-10);
         make.height.equalTo(self.bottomBar.mas_height);
     }];
+
+    self.progressSlider.mas_key = @"progressSlider";
+
 }
 #pragma mark - Property
 - (UIView *)playUI{
@@ -308,7 +339,7 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
 - (UIImageView *)placeholderImageView{
     if (!_placeholderImageView) {
         _placeholderImageView = [[UIImageView alloc]init];
-        _placeholderImageView.backgroundColor = [UIColor redColor];
+        _placeholderImageView.backgroundColor = [UIColor clearColor];
         _placeholderImageView.userInteractionEnabled = YES;
     }
     return _placeholderImageView;
@@ -332,6 +363,20 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     }
     return _playButton;
 }
+- (UIButton *)lockScreenButton
+{
+    if (!_lockScreenButton) {
+        _lockScreenButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        _lockScreenButton.backgroundColor = [UIColor clearColor];
+        [_lockScreenButton setImage:FWAVPlayerImage(@"fw_player_unlock") forState:UIControlStateNormal];
+        [_lockScreenButton setImage:FWAVPlayerImage(@"fw_player_lock") forState:UIControlStateSelected];
+        [_lockScreenButton addTarget:self action:@selector(lockButtonClick) forControlEvents:UIControlEventTouchUpInside];
+        _lockScreenButton.selected = NO;
+        _lockScreenButton.hidden = YES;
+
+    }
+    return _lockScreenButton;
+}
 - (UIButton *)repeatButton
 {
     if (!_repeatButton) {
@@ -352,7 +397,7 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         _fullScreenButton.backgroundColor = [UIColor clearColor];
         [_fullScreenButton setImage:FWAVPlayerImage(@"fw-player-fullscreen") forState:UIControlStateNormal];
         [_fullScreenButton setImage:FWAVPlayerImage(@"fw-player-shrinkscreen") forState:UIControlStateSelected];
-        [_fullScreenButton addTarget:self action:@selector(fullScreenClick:) forControlEvents:UIControlEventTouchUpInside];
+        [_fullScreenButton addTarget:self action:@selector(fullScreenClick) forControlEvents:UIControlEventTouchUpInside];
 
     }
     return _fullScreenButton;
@@ -400,62 +445,44 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     return _indicatorView;
 }
 #pragma mark - Setting
-/* 设置方向锁 */
-- (void)setRotationLock:(BOOL)rotationLock{
-
-    _rotationLock = rotationLock;
-
-    /* 如果锁为NO 并且观察者不存在 则添加 */
-    if (!_rotationLock && !self.hasDeviceOrientationObserver) {
-        UIDevice *device = [UIDevice currentDevice];
-        [device beginGeneratingDeviceOrientationNotifications];
-        NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
-        [nc addObserver:self selector:@selector(orientationChanged:) name:UIDeviceOrientationDidChangeNotification  object:device];
-        self.hasDeviceOrientationObserver = YES;
-
-    }else{
-        /* 说明观察者存在 */
-        if (self.hasDeviceOrientationObserver) {
-            NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
-            UIDevice *device = [UIDevice currentDevice];
-            [nc removeObserver:self name:UIDeviceOrientationDidChangeNotification object:device];
-        }
-        self.hasDeviceOrientationObserver = NO;
-    }
-}
 /* 设置屏幕方向 */
 - (void)setDeviceOrientation:(kDeviceOrientation)deviceOrientation{
 
+    /* 如果屏幕方向不变,则不变 */
     if (_deviceOrientation == deviceOrientation) {
         return;
     }
+
+    /* 如果锁屏,则不变 */
+    if (self.isLockScreen) {
+        NSLog(@"窝草关了啊");
+        return;
+    }else{
+        NSLog(@"窝草没有关啊");
+    }
+
     _deviceOrientation = deviceOrientation;
 
     switch (self.deviceOrientation) {
         case kDeviceOrientationPortrait:
-
-            [[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationPortrait  animated:NO];
             [self shrinkScreen];
-
             break;
         case kDeviceOrientationPortraitUpsideDown:
             /* 不做处理 */
             break;
         case kDeviceOrientationLandscapeLeft:
-
-            [[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationLandscapeRight  animated:NO];
-            [self fullScreenWith:CGAffineTransformMakeRotation(M_PI_2)];
-
+            [self fullScreen];
             break;
         case kDeviceOrientationLandscapeRight:
-
-            [[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationLandscapeLeft  animated:NO];
-            [self fullScreenWith:CGAffineTransformMakeRotation(-M_PI_2)];
-
+            [self fullScreen];
             break;
         default:
             break;
     }
+}
+- (void)setIsLockScreen:(BOOL)isLockScreen{
+    _isLockScreen = isLockScreen;
+    self.shouldAutorotate = !_isLockScreen;
 }
 #pragma mark - FWPlayerSliderDragDelegate
 - (void)playerSliderBeginDragProgress{
@@ -476,54 +503,76 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         [self.playerManager play];
     }
 }
+- (void)lockButtonClick{
+    self.lockScreenButton.selected = !self.lockScreenButton.selected;
+    self.isLockScreen = self.lockScreenButton.selected;
+}
 /* 重播 */
 - (void)repeatButtonClick{
     [self.playerManager resum];
 }
-- (void)fullScreenClick:(UIButton *)button{
-    if (button.selected) {
-        [[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationPortrait  animated:NO];
-        [self shrinkScreen];
-        button.selected = NO;
-    }else{
+- (void)fullScreenClick{
 
-        if (self.deviceOrientation == kDeviceOrientationLandscapeRight) {
+    self.lockScreenButton.selected = NO;
+    self.isLockScreen = NO;
 
-            [[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationLandscapeLeft  animated:NO];
-            [self fullScreenWith:CGAffineTransformMakeRotation(-M_PI_2)];
-        }else{
-
-            [[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationLandscapeRight  animated:NO];
-            [self fullScreenWith:CGAffineTransformMakeRotation(M_PI_2)];
-
+    if (_fullScreenButton.selected) {
+        [self deviceOrientation:UIDeviceOrientationPortrait];
+        if (!self.hasDeviceOrientationObserver) {
+            [self shrinkScreen];
         }
-        button.selected = YES;
-    }
-}
-/* 全屏 */
-- (void)fullScreenWith:(CGAffineTransform)transform
-{
-    /* 全屏的时候加入手势控制 */
-    self.isDisableDrag = NO;
 
-    if (!self.isFullscreenMode) {
-
+    }else{
         /* 暂存原View,从原View上删除,添加到keyWindow中 */
         self.originalSuperView = self.superview;
         self.originalFrame = self.frame;
         self.originalIndex = [[self.superview subviews] indexOfObject:self];
 
+        /* 如果未添加屏幕旋转kvo,所以不会在监听方法中调用屏幕适配方法,此处做判断手动调用 */
+        [self deviceOrientation:UIDeviceOrientationLandscapeLeft];
+        if (!self.hasDeviceOrientationObserver) {
+            [self fullScreen];
+        }
+    }
+}
+/* 全屏 */
+- (void)fullScreen
+{
+    /* 全屏的时候加入手势控制 */
+    self.isDisableDrag = NO;
+    self.lockScreenButton.hidden = NO;
+    self.fullScreenButton.selected = YES;
+
+    if (!self.isFullscreenMode) {
+
+//        /* 暂存原View,从原View上删除,添加到keyWindow中 */
+        if (!self.originalSuperView) {
+            self.originalSuperView = self.superview;
+            self.originalFrame = self.frame;
+            self.originalIndex = [[self.superview subviews] indexOfObject:self];
+        }
+
         [self removeFromSuperview];
         [[UIApplication sharedApplication].keyWindow addSubview:self];
 
-        CGFloat height = [[UIScreen mainScreen] bounds].size.width;
-        CGFloat width = [[UIScreen mainScreen] bounds].size.height;
+        CGFloat width = [[UIScreen mainScreen] bounds].size.width;
+        CGFloat height = [[UIScreen mainScreen] bounds].size.height;
 
         [self mas_remakeConstraints:^(MASConstraintMaker *make) {
-            make.left.mas_equalTo((width - height) / 2);
-            make.top.mas_equalTo((height - width) / 2);
-            make.width.mas_equalTo(height);
-            make.height.mas_equalTo(width);
+
+            /* 如果未添加屏幕旋转kvo,则需要手动调节 */
+            if (!self.hasDeviceOrientationObserver) {
+                make.left.mas_equalTo((width - height) / 2);
+                make.top.mas_equalTo((height - width) / 2);
+                make.width.mas_equalTo(height);
+                make.height.mas_equalTo(width);
+            }else{
+                make.left.mas_equalTo(0);
+                make.top.mas_equalTo(0);
+                make.width.mas_equalTo(width);
+                make.height.mas_equalTo(height);
+            }
+
         }];
 
         [self.bottomBar mas_remakeConstraints:^(MASConstraintMaker *make) {
@@ -533,21 +582,26 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
             make.height.mas_equalTo(kBottomBarFullScreenHeight);
         }];
 
+        [self.playerView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.edges.equalTo(self);
+        }];
+
         // 告诉self.view约束需要更新
         [self setNeedsUpdateConstraints];
         // 调用此方法告诉self.view检测是否需要更新约束，若需要则更新，下面添加动画效果才起作用
         [self updateConstraintsIfNeeded];
-
     }
 
     [UIView animateWithDuration:0.3 animations:^{
-        [self setTransform:transform];
         [self layoutIfNeeded];
-        NSLog(@"fullScreen");
-
+        /* 如果未添加屏幕旋转kvo,则需要手动调节 */
+        if (!self.hasDeviceOrientationObserver) {
+            [[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationLandscapeRight  animated:NO];
+            self.transform = CGAffineTransformMakeRotation(M_PI_2);
+        }
     } completion:^(BOOL finished) {
         self.isFullscreenMode = YES;
-
+        NSLog(@"全屏状态");
     }];
 }
 /* 取消全屏 */
@@ -556,6 +610,10 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     if (!self.isFullscreenMode) {
         return;
     }
+    /* 非全屏时,锁屏置为NO */
+    self.isLockScreen = NO;
+    self.lockScreenButton.selected = NO;
+    self.lockScreenButton.hidden = YES;
     /* 非全屏的时候禁止手势控制 */
     self.isDisableDrag = YES;
 
@@ -579,21 +637,27 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         make.height.mas_equalTo(kBottomBarShrinkScreenHeight);
     }];
 
+    [self.playerView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self);
+    }];
+
     // 告诉self.view约束需要更新
     [self setNeedsUpdateConstraints];
     // 调用此方法告诉self.view检测是否需要更新约束，若需要则更新，下面添加动画效果才起作用
     [self updateConstraintsIfNeeded];
 
     [UIView animateWithDuration:0.3 animations:^{
-
-        [self setTransform:CGAffineTransformIdentity];
         [self layoutIfNeeded];
-        NSLog(@"shrinkScreen");
-
+        /* 如果未添加屏幕旋转kvo,则需要手动调节 */
+        if (!self.hasDeviceOrientationObserver) {
+            [[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationPortrait  animated:NO];
+            self.transform = CGAffineTransformIdentity;
+        }
 
     } completion:^(BOOL finished) {
-
+        NSLog(@"非全屏状态");
         self.isFullscreenMode = NO;
+        self.fullScreenButton.selected = NO;
     }];
 }
 /* 更新约束 */
@@ -605,8 +669,9 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
 }
 - (void)layoutSubviews{
     [super layoutSubviews];
-    NSLog(@"layoutSubviews");
     [self.playerManager.avPlayerLayer setFrame:self.playerView.bounds];
+    [UIApplication sharedApplication].statusBarHidden = NO;
+    [self autoFadeOutUI];
 }
 /* 隐藏UI */
 - (void)animateHide
@@ -674,24 +739,42 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     self.progressSlider.midProgress = 0;
     
 }
+- (void)deviceOrientation:(UIDeviceOrientation)orientation
+{
+    UIInterfaceOrientation interfaceOrientation = (UIInterfaceOrientation)orientation;
+
+    if ([[UIDevice currentDevice] respondsToSelector:@selector(setOrientation:)]) {
+        SEL selector = NSSelectorFromString(@"setOrientation:");
+        NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:[UIDevice instanceMethodSignatureForSelector:selector]];
+        [invocation setSelector:selector];
+        [invocation setTarget:[UIDevice currentDevice]];
+        int val = interfaceOrientation;
+        [invocation setArgument:&val atIndex:2];
+        [invocation invoke];
+    }
+}
 /* 屏幕方向改变 */
 - (void)orientationChanged:(NSNotification *)note  {
 
     UIDeviceOrientation o = [[UIDevice currentDevice] orientation];
     switch (o) {
         case UIDeviceOrientationPortrait:
-            NSLog(@"UIDeviceOrientationPortrait:Home键在底部");
             self.deviceOrientation = kDeviceOrientationPortrait;
+            self.interfaceOrientationMask = UIInterfaceOrientationMaskPortrait;
+
             break;
-        case UIDeviceOrientationPortraitUpsideDown:            NSLog(@"UIDeviceOrientationPortraitUpsideDown:Home键在顶部");
+        case UIDeviceOrientationPortraitUpsideDown:
             self.deviceOrientation = kDeviceOrientationPortraitUpsideDown;
+            self.interfaceOrientationMask = UIInterfaceOrientationMaskPortraitUpsideDown;
             break;
-        case UIDeviceOrientationLandscapeLeft:            NSLog(@"UIDeviceOrientationLandscapeLeft:Home键在右边");
+        case UIDeviceOrientationLandscapeLeft:
             self.deviceOrientation = kDeviceOrientationLandscapeLeft;
+            self.interfaceOrientationMask = UIInterfaceOrientationMaskLandscapeLeft;
             break;
         case UIDeviceOrientationLandscapeRight:
             self.deviceOrientation = kDeviceOrientationLandscapeRight;
-            NSLog(@"UIDeviceOrientationLandscapeRight:Home键在左边");
+            self.interfaceOrientationMask = UIInterfaceOrientationMaskLandscapeRight;
+
             break;
         default:
             break;
