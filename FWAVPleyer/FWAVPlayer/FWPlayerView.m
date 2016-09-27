@@ -12,6 +12,7 @@
 
 static const CGFloat kUIShowTimeInterval = 0.3;//UI渐变时间
 static const CGFloat kUIAutoHideTimeInterval = 3.0;//UI显示时间
+static const CGFloat kRotateOrientationAnimationInterval = 0.30;//屏幕旋转动画时间
 static const CGFloat kBottomBarFullScreenHeight = 44.0;//全屏状态底部操作栏高度
 static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部操作栏高度
 
@@ -25,28 +26,28 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
 
 @property (strong,nonatomic)UIButton *repeatButton;//播放暂停
 
-@property (nonatomic, strong) UILabel *currentTimeLabel;//当前时间
+@property (nonatomic, strong)UILabel *currentTimeLabel;//当前时间
 
-@property (nonatomic, strong) UILabel *totalTimeLabel;//总时间
+@property (nonatomic, strong)UILabel *totalTimeLabel;//总时间
 
-@property (nonatomic, strong) FWPlayerSlider *progressSlider;//进度条
+@property (nonatomic, strong)FWPlayerSlider *progressSlider;//进度条
 
 @property (strong,nonatomic)UIButton *fullScreenButton;//全屏按钮
 
 @property (strong,nonatomic)UIButton *lockScreenButton;//锁屏按钮
 
-@property (nonatomic, strong) UIActivityIndicatorView *indicatorView;//小菊花
+@property (nonatomic, strong)UIActivityIndicatorView *indicatorView;//小菊花
 
-@property (nonatomic, assign) BOOL isShowUI;//是否显示UI
+@property (nonatomic, assign)BOOL isShowUI;//是否显示UI
 
-@property (nonatomic, assign) BOOL isLockScreen;
+@property (nonatomic, assign)BOOL isLockScreen;
 
 @property (nonatomic, assign)UIView *originalSuperView;//原始SuperView,全屏时所用
 
 @property (nonatomic, assign)CGRect originalFrame;//原始Frame,全屏时所用
 
 @property (nonatomic, assign)NSInteger originalIndex;//原始index,在父视图中属于第几层,全屏时所用
-@property (nonatomic, assign) BOOL isFullscreenMode;//是否全屏
+@property (nonatomic, assign)BOOL isFullscreenMode;//是否全屏
 
 @property (nonatomic, assign)kDeviceOrientation deviceOrientation;//屏幕旋转方向
 
@@ -75,7 +76,6 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         [self setup];
     }
     return self;
-
 }
 - (void)dealloc{
     [self removeDeviceOrientationChangedObserver];
@@ -452,15 +452,10 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     if (_deviceOrientation == deviceOrientation) {
         return;
     }
-
     /* 如果锁屏,则不变 */
     if (self.isLockScreen) {
-        NSLog(@"窝草关了啊");
         return;
-    }else{
-        NSLog(@"窝草没有关啊");
     }
-
     _deviceOrientation = deviceOrientation;
 
     switch (self.deviceOrientation) {
@@ -543,9 +538,10 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     self.lockScreenButton.hidden = NO;
     self.fullScreenButton.selected = YES;
 
+    /* 如果非全屏状态 */
     if (!self.isFullscreenMode) {
 
-//        /* 暂存原View,从原View上删除,添加到keyWindow中 */
+        /* 暂存原View,从原View上删除,添加到keyWindow中 */
         if (!self.originalSuperView) {
             self.originalSuperView = self.superview;
             self.originalFrame = self.frame;
@@ -567,10 +563,7 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
                 make.width.mas_equalTo(height);
                 make.height.mas_equalTo(width);
             }else{
-                make.left.mas_equalTo(0);
-                make.top.mas_equalTo(0);
-                make.width.mas_equalTo(width);
-                make.height.mas_equalTo(height);
+                make.edges.insets(UIEdgeInsetsMake(0, 0, 0, 0));
             }
 
         }];
@@ -586,27 +579,33 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
             make.edges.equalTo(self);
         }];
 
+    }
+    /* 如果未添加屏幕旋转kvo,则需要手动调节 */
+    if (!self.hasDeviceOrientationObserver) {
+
         // 告诉self.view约束需要更新
         [self setNeedsUpdateConstraints];
         // 调用此方法告诉self.view检测是否需要更新约束，若需要则更新，下面添加动画效果才起作用
         [self updateConstraintsIfNeeded];
-    }
 
-    [UIView animateWithDuration:0.3 animations:^{
-        [self layoutIfNeeded];
-        /* 如果未添加屏幕旋转kvo,则需要手动调节 */
-        if (!self.hasDeviceOrientationObserver) {
+        [UIView animateWithDuration:kRotateOrientationAnimationInterval animations:^{
+            [self layoutIfNeeded];
             [[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationLandscapeRight  animated:NO];
             self.transform = CGAffineTransformMakeRotation(M_PI_2);
-        }
-    } completion:^(BOOL finished) {
-        self.isFullscreenMode = YES;
-        NSLog(@"全屏状态");
-    }];
+
+        } completion:^(BOOL finished) {
+
+        }];
+    }
+
+    self.isFullscreenMode = YES;
+
+
 }
 /* 取消全屏 */
 - (void)shrinkScreen
 {
+    /* 如果非全屏状态return */
     if (!self.isFullscreenMode) {
         return;
     }
@@ -641,24 +640,28 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         make.edges.equalTo(self);
     }];
 
-    // 告诉self.view约束需要更新
-    [self setNeedsUpdateConstraints];
-    // 调用此方法告诉self.view检测是否需要更新约束，若需要则更新，下面添加动画效果才起作用
-    [self updateConstraintsIfNeeded];
 
-    [UIView animateWithDuration:0.3 animations:^{
-        [self layoutIfNeeded];
-        /* 如果未添加屏幕旋转kvo,则需要手动调节 */
-        if (!self.hasDeviceOrientationObserver) {
+    /* 如果未添加屏幕旋转kvo,则需要手动调节 */
+    if (!self.hasDeviceOrientationObserver) {
+
+        // 告诉self.view约束需要更新
+        [self setNeedsUpdateConstraints];
+        // 调用此方法告诉self.view检测是否需要更新约束，若需要则更新，下面添加动画效果才起作用
+        [self updateConstraintsIfNeeded];
+
+        [UIView animateWithDuration:kRotateOrientationAnimationInterval animations:^{
+            [self layoutIfNeeded];
             [[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationPortrait  animated:NO];
             self.transform = CGAffineTransformIdentity;
-        }
 
-    } completion:^(BOOL finished) {
-        NSLog(@"非全屏状态");
-        self.isFullscreenMode = NO;
-        self.fullScreenButton.selected = NO;
-    }];
+        } completion:^(BOOL finished) {
+
+        }];
+
+    }
+
+    self.isFullscreenMode = NO;
+    self.fullScreenButton.selected = NO;
 }
 /* 更新约束 */
 - (void)updatePlayerViewConstraints{
@@ -672,6 +675,9 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     [self.playerManager.avPlayerLayer setFrame:self.playerView.bounds];
     [UIApplication sharedApplication].statusBarHidden = NO;
     [self autoFadeOutUI];
+    // fix iOS7 crash bug
+    [self layoutIfNeeded];
+
 }
 /* 隐藏UI */
 - (void)animateHide

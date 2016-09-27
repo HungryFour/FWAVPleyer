@@ -105,7 +105,9 @@
     [self.navigationController pushViewController:pvc animated:YES];
 }
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
-    [self setPlayerViewSuperView];
+    if (scrollView == self.tableView) {
+        [self setPlayerViewSuperView];
+    }
 }
 #pragma mark - VideoTableViewCellDelegate
 - (void)cellDidClickPlay:(VideoTableViewCell *)cell{
@@ -124,11 +126,12 @@
 }
 - (void)setPlayerViewSuperView{
 
-    /* 如果播放器不在播放和加载中,则删除 */
-    if (self.playerView.state == FWAVPlayerPlayStateFailed || self.playerView.state == FWAVPlayerPlayStateFinished || [self.playerView.videoUrl length]==0){
+    /* 如果播放器出错,则删除 */
+    if (self.playerView.state == FWAVPlayerPlayStateFailed || [self.playerView.videoUrl length]==0){
         [self removePlayerView];
         return;
     }
+
     /* 如果播放器是全屏状态,则啥也不干 */
     if (self.playerView.isFullscreenMode) {
         return;
@@ -149,7 +152,6 @@
             /* 告诉self.playerView约束需要更新 */
             [self.playerView updatePlayerViewConstraints];
             [self.tableView reloadData];
-
         }
 
     }else {
@@ -170,6 +172,12 @@
             [self.playerView updatePlayerViewConstraints];
             [self.tableView reloadData];
         }
+
+        /* 如果播放结束,则不显示在小窗口 */
+        if (self.playerView.state == FWAVPlayerPlayStateFinished){
+            self.playerView.hidden = YES;
+        }
+
     }
 }
 - (void)removePlayerView{
@@ -194,7 +202,6 @@
             break;
         case FWAVPlayerPlayStateFinished:
             NSLog(@"FWAVPlayerPlayStateFinished");
-            //            [self removePlayerView];
             break;
         case FWAVPlayerPlayStateBuffering:
             NSLog(@"FWAVPlayerPlayStateBuffering");

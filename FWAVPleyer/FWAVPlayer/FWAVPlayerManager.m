@@ -532,8 +532,7 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
         return @"00:00:00";
     }else{
         double duration = CMTimeGetSeconds(self.currentDuration);
-        if (isfinite(duration))
-        {
+        if (isfinite(duration) && duration>0){
             double hoursElapsed = floor(duration / (60.0*60));
             double minutesElapsed = fmod(duration / 60, 60);
             double secondsElapsed = fmod(duration, 60.0);
@@ -576,8 +575,8 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
         return @"00:00:00";
     }else{
         double duration = CMTimeGetSeconds(self.itemDuration);
-        if (isfinite(duration))
-        {
+
+        if (isfinite(duration) && duration>0){
             double hoursElapsed = floor(duration / (60.0*60));
             double minutesElapsed = fmod(duration / 60, 60);
             double secondsElapsed = fmod(duration, 60.0);
@@ -624,7 +623,7 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
 }
 - (void)resum{
     [self.player seekToTime:kCMTimeZero];
-    [_player play];
+    [self.player play];
 }
 - (void)clear{
 
@@ -722,6 +721,10 @@ static void *kPlaybackLikelyToKeepUpObservationContext = &kPlaybackLikelyToKeepU
 // 跳转到相应时刻
 - (void)sliderSeekToTime:(CGFloat)time{
     [_player seekToTime:CMTimeMakeWithSeconds(time, NSEC_PER_SEC) completionHandler:^(BOOL finished) {
+
+        if (!self.timeObserverForInterval){
+            [self addTimeObserverForInterval];
+        }
 
     }];
 }
