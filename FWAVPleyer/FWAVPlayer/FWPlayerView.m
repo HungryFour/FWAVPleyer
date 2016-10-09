@@ -40,7 +40,7 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
 
 @property (nonatomic, assign)BOOL isShowUI;//是否显示UI
 
-@property (nonatomic, assign)BOOL isLockScreen;
+@property (nonatomic, assign)BOOL isLockScreen;//是否锁定屏幕
 
 @property (nonatomic, assign)UIView *originalSuperView;//原始SuperView,全屏时所用
 
@@ -222,7 +222,7 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
             self.playButton.selected = YES;
         }else{
             self.playButton.selected = NO;
-            [self animateShow];
+            [self animateControlShow];
         }
         /* 暂停 */
         if (status == FWAVPlayerPlayStatePause) {
@@ -235,9 +235,9 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     [self addSubview:self.placeholderImageView];
     [self addSubview:self.playUI];
     [self sendSubviewToBack:self.placeholderImageView];
+    [self addSubview:self.lockScreenButton];
 
     [self.playUI addSubview:self.playButton];
-    [self.playUI addSubview:self.lockScreenButton];
     [self.playUI addSubview:self.repeatButton];
     [self.playUI addSubview:self.bottomBar];
     [self.playUI addSubview:self.indicatorView];
@@ -501,6 +501,15 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
 - (void)lockButtonClick{
     self.lockScreenButton.selected = !self.lockScreenButton.selected;
     self.isLockScreen = self.lockScreenButton.selected;
+    /* 如果锁屏则控制页面消失 */
+    if (self.isLockScreen) {
+        self.playUI.hidden = YES;
+        self.isDisableDrag = YES;
+    }else{
+        self.playUI.hidden = NO;
+        self.isDisableDrag = NO;
+        [self animateControlShow];
+    }
 }
 /* 重播 */
 - (void)repeatButtonClick{
@@ -657,7 +666,6 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
         } completion:^(BOOL finished) {
 
         }];
-
     }
 
     self.isFullscreenMode = NO;
@@ -680,30 +688,31 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
 
 }
 /* 隐藏UI */
-- (void)animateHide
+- (void)animateControlHide
 {
     if (!self.isShowUI) {
         return;
     }
     [UIView animateWithDuration:kUIShowTimeInterval animations:^{
         self.playUI.alpha = 0.0;
-
+        self.lockScreenButton.alpha = 0.0;
     } completion:^(BOOL finished) {
         self.isShowUI = NO;
         if (self.isFullscreenMode) {
             [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
         }
-
     }];
 }
 /* 展示UI */
-- (void)animateShow
+- (void)animateControlShow
 {
     if (self.isShowUI) {
         return;
     }
     [UIView animateWithDuration:kUIShowTimeInterval animations:^{
         self.playUI.alpha = 1.0;
+        self.lockScreenButton.alpha = 1.0;
+
     } completion:^(BOOL finished) {
         if (self.isFullscreenMode) {
             [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
@@ -718,24 +727,25 @@ static const CGFloat kBottomBarShrinkScreenHeight = 30.0;//非全屏状态底部
     if (!self.isShowUI) {
         return;
     }
-    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(animateHide) object:nil];
-    [self performSelector:@selector(animateHide) withObject:nil afterDelay:kUIAutoHideTimeInterval];
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(animateControlHide) object:nil];
+    [self performSelector:@selector(animateControlHide) withObject:nil afterDelay:kUIAutoHideTimeInterval];
 }
 /* 取消展示UI */
 - (void)cancelautoFadeOutUI
 {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(animateHide) object:nil];
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(animateControlHide) object:nil];
 }
 - (void)onTap:(UITapGestureRecognizer *)gesture
 {
     if (gesture.state == UIGestureRecognizerStateRecognized) {
         if (self.isShowUI) {
-            [self animateHide];
+            [self animateControlHide];
         } else {
-            [self animateShow];
+            [self animateControlShow];
         }
     }
 }
+
 /* 重置UI */
 - (void)resetUI{
 
